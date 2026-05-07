@@ -58,7 +58,7 @@ InputDecoration fastPayInputDecoration({
     prefixIcon: prefixIcon,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     labelStyle: const TextStyle(color: FastPayCheckoutPalette.textSecondary),
-    hintStyle: const TextStyle(color: Color(0xFFC4C4C4)), // AppColors.hintColor
+    hintStyle: const TextStyle(color: Color(0xFFC4C4C4)),
     border: border,
     enabledBorder: border,
     focusedBorder: border.copyWith(
@@ -86,13 +86,16 @@ InputDecoration fastpayInputDecorationUnified({
   String? label,
   required String hint,
   Widget? prefixIcon,
+  Widget? suffixIcon,
 }) {
   return InputDecoration(
     labelText: label,
     hintText: hint,
     filled: true,
-    fillColor: Colors.transparent, // Transparent for unified container
+    fillColor: Colors.transparent,
     prefixIcon: prefixIcon,
+    suffixIcon: suffixIcon,
+    suffixIconConstraints: const BoxConstraints(minHeight: 28, minWidth: 28),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     labelStyle: const TextStyle(color: FastPayCheckoutPalette.textSecondary),
     hintStyle: const TextStyle(color: Color(0xFFC4C4C4)),

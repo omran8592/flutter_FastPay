@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../utils/card_input_formatters.dart';
+import '../utils/card_validator.dart';
 import '../models/card_details.dart';
 import 'fastpay_checkout_theme.dart';
 
@@ -37,7 +38,9 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
   late final TextEditingController _cardNumberController;
   late final TextEditingController _expiryController;
   late final TextEditingController _cvvController;
-  late final TextEditingController _cardholderController;
+
+  CardType _detectedCardType = CardType.unknown;
+  bool _isFormValid = false;
 
   @override
   void initState() {
@@ -45,16 +48,64 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
     _cardNumberController = TextEditingController();
     _expiryController = TextEditingController();
     _cvvController = TextEditingController();
-    _cardholderController = TextEditingController();
+
+    _cardNumberController.addListener(_onCardNumberChanged);
+    _cardNumberController.addListener(_validateForm);
+    _expiryController.addListener(_validateForm);
+    _cvvController.addListener(_validateForm);
   }
 
   @override
   void dispose() {
+    _cardNumberController.removeListener(_onCardNumberChanged);
+    _cardNumberController.removeListener(_validateForm);
+    _expiryController.removeListener(_validateForm);
+    _cvvController.removeListener(_validateForm);
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
-    _cardholderController.dispose();
     super.dispose();
+  }
+
+  void _onCardNumberChanged() {
+    final String digits = _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
+    final CardType type = detectCardType(digits);
+    if (type != _detectedCardType) {
+      setState(() {
+        _detectedCardType = type;
+      });
+    }
+  }
+
+  void _validateForm() {
+    bool isValid = true;
+
+    final String cardDigits = _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
+    if (cardDigits.length != 16) {
+      isValid = false;
+    }
+
+    final List<String> expiryParts = _expiryController.text.split('/');
+    if (expiryParts.length != 2) {
+      isValid = false;
+    } else {
+      final int? month = int.tryParse(expiryParts[0]);
+      final int? year = int.tryParse(expiryParts[1]);
+      if (month == null || year == null || month < 1 || month > 12) {
+        isValid = false;
+      }
+    }
+
+    final String cvvDigits = _cvvController.text.replaceAll(RegExp(r'\D'), '');
+    if (cvvDigits.length != 3) {
+      isValid = false;
+    }
+
+    if (isValid != _isFormValid) {
+      setState(() {
+        _isFormValid = isValid;
+      });
+    }
   }
 
   @override
@@ -67,54 +118,39 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'Card information',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: FastPayCheckoutPalette.textPrimary,
-              fontWeight: FontWeight.w800,
+            'Card Information',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: const Color(0xFF0F365A),
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Enter the details exactly as they appear on your card.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: FastPayCheckoutPalette.textSecondary,
-              height: 1.45,
-            ),
-          ),
+          const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
             child: Column(
               children: [
                 TextFormField(
-                  controller: _cardholderController,
-                  enabled: widget.enabled,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: fastpayInputDecorationUnified(
-                    hint: 'Cardholder name',
-                    prefixIcon: const Icon(Icons.person_outline_rounded),
-                  ),
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter the cardholder name.';
-                    }
-                    return null;
-                  },
-                ),
-                const Divider(height: 1, color: Color(0xFFE0E0E0)),
-                TextFormField(
                   controller: _cardNumberController,
                   enabled: widget.enabled,
                   obscureText: true,
-                  obscuringCharacter: '*',
+                  obscuringCharacter: '•',
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.next,
                   decoration: fastpayInputDecorationUnified(
-                    hint: 'Card number',
-                    prefixIcon: const Icon(Icons.credit_card_rounded),
+                    hint: '•••• •••• •••• 1234',
+                    suffixIcon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: _detectedCardType != CardType.unknown
+                          ? Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: cardTypeIcon(_detectedCardType),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
                   ),
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
@@ -139,8 +175,7 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
                           keyboardType: TextInputType.number,
                           textInputAction: TextInputAction.next,
                           decoration: fastpayInputDecorationUnified(
-                            hint: 'Expiry...',
-                            prefixIcon: const Icon(Icons.calendar_today_outlined),
+                            hint: 'MM / YY',
                           ),
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.digitsOnly,
@@ -169,8 +204,7 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
                           enabled: widget.enabled,
                           keyboardType: TextInputType.number,
                           decoration: fastpayInputDecorationUnified(
-                            hint: 'Security...',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
+                            hint: 'CVC',
                           ),
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.digitsOnly,
@@ -196,6 +230,8 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
             style: FilledButton.styleFrom(
               backgroundColor: FastPayCheckoutPalette.primary,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: const Color(0xFFE0E0E0),
+              disabledForegroundColor: const Color(0xFFA0A0A0),
               minimumSize: const Size.fromHeight(56),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -204,9 +240,9 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            onPressed: widget.enabled ? _submit : null,
+            onPressed: (widget.enabled && _isFormValid) ? _submit : null,
             child: Text(
-              'Pay ${formatFastPayAmount(widget.amount, widget.currency)}',
+              'Pay ${formatFastPayAmount(widget.amount, widget.currency)} Now',
             ),
           ),
         ],
@@ -233,7 +269,7 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
         expiryMonth: month,
         expiryYear: year,
         cvv: _cvvController.text,
-        cardholderName: _cardholderController.text.trim(),
+        cardholderName: null,
         last4: number.length >= 4 ? number.substring(number.length - 4) : null,
       ),
     );

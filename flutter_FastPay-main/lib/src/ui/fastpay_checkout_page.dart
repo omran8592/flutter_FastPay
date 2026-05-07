@@ -5,6 +5,7 @@ import '../flow/fastpay_flow_controller.dart';
 import '../flow/fastpay_flow_state.dart';
 import '../models/card_details.dart';
 import '../models/customer.dart';
+import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/payment_session.dart';
 import '../services/payment_service.dart';
@@ -88,7 +89,7 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: FastPayCheckoutPalette.background,
+        color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       child: AnimatedBuilder(
@@ -108,19 +109,41 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
+                        Center(
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 8, bottom: 24),
+                            width: 60,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
                         if (state.stage == FastPayFlowStage.creatingSession ||
-                            state.stage == FastPayFlowStage.initial ||
-                            state.stage == FastPayFlowStage.ready)
+                            state.stage == FastPayFlowStage.initial)
+                          const _CustomLoadingScreen(
+                            title: 'Initializing...',
+                            message: 'Please wait while we set up\nyour secure checkout.',
+                          )
+                        else if (state.stage == FastPayFlowStage.ready)
                           Container(
-                            padding: const EdgeInsets.all(22),
-                            decoration: fastPaySurfaceDecoration(),
-                            child: FastPayCardForm(
-                              amount: widget.amount,
-                              currency: widget.currency,
-                              enabled: true,
-                              onSubmit: (CardDetails card) async {
-                                await _controller.submitCardPayment(card);
-                              },
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(height: 24),
+                                _PaymentMethodTabs(methods: state.paymentMethods),
+                                const SizedBox(height: 24),
+                                FastPayCardForm(
+                                  amount: widget.amount,
+                                  currency: widget.currency,
+                                  enabled: true,
+                                  onSubmit: (CardDetails card) async {
+                                    await _controller.submitCardPayment(card);
+                                  },
+                                ),
+                              ],
                             ),
                           )
                         else if (state.stage == FastPayFlowStage.processing)
@@ -146,15 +169,15 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
                           const SizedBox(height: 18),
                           _InlineNotice(message: state.errorMessage!),
                         ],
-                        const SizedBox(height: 16),
-                        Text(
-                          'Powered by FastPay',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: FastPayCheckoutPalette.textSecondary,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Image.asset(
+                            'assets/images/fastpay.png',
+                            package: 'fastpay_sdk',
+                            height: 28,
                           ),
-                          textAlign: TextAlign.center,
                         ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -194,6 +217,133 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
         );
 
     Navigator.of(context).pop(finalResult);
+  }
+}
+
+class _PaymentMethodTabs extends StatelessWidget {
+  const _PaymentMethodTabs({this.methods});
+
+  final List<PaymentMethod>? methods;
+
+  @override
+  Widget build(BuildContext context) {
+    if (methods == null || methods!.isEmpty) {
+      return Row(
+        children: const <Widget>[
+          _MethodTab(
+            icon: Icons.credit_card_rounded,
+            label: 'Credit Card',
+            isSelected: true,
+          ),
+          SizedBox(width: 10),
+          _MethodTab(
+            icon: Icons.account_balance_wallet_outlined,
+            label: 'Wallet',
+            isSelected: false,
+          ),
+          SizedBox(width: 10),
+          _MethodTab(
+            imageAsset: 'assets/images/instapay.png',
+            label: 'instapay',
+            isSelected: false,
+          ),
+        ],
+      );
+    }
+
+    final List<Widget> children = [];
+    for (int i = 0; i < methods!.length; i++) {
+      final PaymentMethod method = methods![i];
+      IconData? icon;
+      String? imageAsset;
+
+      if (method.code == 'card') {
+        icon = Icons.credit_card_rounded;
+      } else if (method.code == 'wallet') {
+        icon = Icons.account_balance_wallet_outlined;
+      } else if (method.code == 'instapay') {
+        imageAsset = 'assets/images/instapay.png';
+      } else {
+        icon = Icons.payment_rounded;
+      }
+
+      children.add(
+        _MethodTab(
+          icon: icon,
+          imageAsset: imageAsset,
+          label: method.name ?? method.code ?? 'Unknown',
+          isSelected: i == 0,
+        ),
+      );
+
+      if (i < methods!.length - 1) {
+        children.add(const SizedBox(width: 10));
+      }
+    }
+
+    return Row(children: children);
+  }
+}
+
+class _MethodTab extends StatelessWidget {
+  const _MethodTab({
+    this.icon,
+    this.imageAsset,
+    required this.label,
+    required this.isSelected,
+  });
+
+  final IconData? icon;
+  final String? imageAsset;
+  final String label;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color borderColor =
+        isSelected ? FastPayCheckoutPalette.primary : const Color(0xFFE0E0E0);
+    final Color bgColor =
+        isSelected ? FastPayCheckoutPalette.primarySoft : Colors.white;
+    final Color fgColor =
+        isSelected ? FastPayCheckoutPalette.primary : const Color(0xFF8E8E93);
+
+    Widget iconWidget;
+    if (imageAsset != null) {
+      iconWidget = Image.asset(
+        imageAsset!,
+        package: 'fastpay_sdk',
+        width: 32,
+        height: 24,
+      );
+    } else {
+      iconWidget = Icon(icon, size: 24, color: fgColor);
+    }
+
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor, width: 1.5),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            iconWidget,
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: fgColor,
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

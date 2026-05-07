@@ -1,5 +1,6 @@
 import '../models/payment_result.dart';
 import '../models/payment_details.dart';
+import '../models/payment_method.dart';
 import '../models/payment_session.dart';
 
 /// Internal checkout stages used by the SDK UI.
@@ -22,6 +23,7 @@ class FastPayFlowState {
     this.payment,
     this.result,
     this.errorMessage,
+    this.paymentMethods,
   });
 
   /// Initial empty flow state.
@@ -30,7 +32,8 @@ class FastPayFlowState {
       session = null,
       payment = null,
       result = null,
-      errorMessage = null;
+      errorMessage = null,
+      paymentMethods = null;
 
   /// Current stage.
   final FastPayFlowStage stage;
@@ -47,6 +50,9 @@ class FastPayFlowState {
   /// Latest error message.
   final String? errorMessage;
 
+  /// Available payment methods fetched from the backend.
+  final List<PaymentMethod>? paymentMethods;
+
   /// Whether the flow is busy with a network-bound task.
   bool get isBusy =>
       stage == FastPayFlowStage.creatingSession ||
@@ -62,6 +68,7 @@ class FastPayFlowState {
     Object? payment = _sentinel,
     Object? result = _sentinel,
     Object? errorMessage = _sentinel,
+    Object? paymentMethods = _sentinel,
     bool clearErrorMessage = false,
     bool clearResult = false,
   }) {
@@ -83,6 +90,9 @@ class FastPayFlowState {
           : identical(errorMessage, _sentinel)
           ? this.errorMessage
           : errorMessage as String?,
+      paymentMethods: identical(paymentMethods, _sentinel)
+          ? this.paymentMethods
+          : paymentMethods as List<PaymentMethod>?,
     );
   }
 }

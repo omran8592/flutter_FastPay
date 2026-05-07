@@ -4,6 +4,7 @@ import '../core/api_exception.dart';
 import '../models/card_details.dart';
 import '../models/customer.dart';
 import '../models/payment_details.dart';
+import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/payment_session.dart';
 import '../services/payment_service.dart';
@@ -39,6 +40,8 @@ class FastPayFlowController extends ChangeNotifier {
     );
 
     try {
+      final List<PaymentMethod> methods = await _paymentService.listMethods();
+      
       final PaymentSession session = await _paymentService.createSession(
         amount: amount,
         currency: currency,
@@ -54,6 +57,7 @@ class FastPayFlowController extends ChangeNotifier {
           stage: FastPayFlowStage.ready,
           session: session,
           payment: null,
+          paymentMethods: methods,
           clearErrorMessage: true,
           clearResult: true,
         ),
