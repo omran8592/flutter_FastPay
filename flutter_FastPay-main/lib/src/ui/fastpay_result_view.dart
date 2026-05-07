@@ -32,159 +32,169 @@ class FastPayResultView extends StatelessWidget {
     final _ResultTone tone = _toneForResult(result);
     final String? amount = result.payment?.amount;
     final String? currency = result.payment?.currency;
-    final String? paymentId =
-        result.payment?.paymentId ?? result.session?.paymentId;
+    final String paymentId =
+        result.payment?.paymentId ?? result.session?.paymentId ?? 'Unknown';
 
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: fastPaySurfaceDecoration(),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Center(
-            child: Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: tone.iconBackground,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(tone.icon, size: 34, color: tone.iconColor),
+          Container(width: 134, height: 3, color: Colors.black),
+          const SizedBox(height: 24),
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: tone.iconBackground,
+              shape: BoxShape.circle,
             ),
+            child: Icon(tone.icon, size: 40, color: tone.iconColor),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             tone.title,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: FastPayCheckoutPalette.textPrimary,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: tone.iconColor == FastPayCheckoutPalette.success
+                  ? FastPayCheckoutPalette.textPrimary
+                  : FastPayCheckoutPalette.danger,
               fontWeight: FontWeight.w800,
+              fontSize: 22,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             result.errorMessage ?? _defaultMessage(result),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: FastPayCheckoutPalette.textSecondary,
-              height: 1.5,
+              fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
           ),
-          if (amount != null && currency != null) ...<Widget>[
-            const SizedBox(height: 24),
+          const SizedBox(height: 24),
+          if (result.isSuccess && amount != null && currency != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
-                color: tone.amountBackground,
-                borderRadius: BorderRadius.circular(22),
+                color: FastPayCheckoutPalette.primary,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
-                children: <Widget>[
+                children: [
                   Text(
                     '$amount $currency',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: tone.amountForeground,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
                       fontWeight: FontWeight.w800,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
-                    'FastPay latest payment snapshot',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: tone.amountForeground.withValues(alpha: 0.82),
-                      fontWeight: FontWeight.w600,
+                    'Payment completed successfully',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 20),
           ],
-          const SizedBox(height: 24),
-          _ResultDetailRow(label: 'Status', value: result.status ?? 'unknown'),
-          if (paymentId != null)
-            _ResultDetailRow(
-              label: 'Payment ID',
-              value: formatFastPayId(paymentId),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: FastPayCheckoutPalette.background,
+              borderRadius: BorderRadius.circular(12),
             ),
-          if (result.session?.reference != null)
-            _ResultDetailRow(
-              label: 'Reference',
-              value: result.session!.reference!,
+            child: Column(
+              children: [
+                _ResultDetailRow(label: 'Transaction ID', value: paymentId),
+                if (result.isSuccess) ...[
+                  const SizedBox(height: 10),
+                  _ResultDetailRow(
+                    label: 'Method',
+                    value: result.payment?.paymentMethod ?? 'Card',
+                  ),
+                ],
+              ],
             ),
-          if (result.payment?.paymentMethod != null)
-            _ResultDetailRow(
-              label: 'Method',
-              value: result.payment!.paymentMethod!,
-            ),
-          const SizedBox(height: 24),
-          if (result.isPending && onRefreshStatus != null) ...<Widget>[
-            FilledButton(
-              style: _primaryButtonStyle(theme),
-              onPressed: onRefreshStatus,
-              child: const Text('Refresh status'),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (result.isFailure && onRetry != null) ...<Widget>[
-            FilledButton(
-              style: _primaryButtonStyle(theme),
-              onPressed: onRetry,
-              child: const Text('Try again'),
-            ),
-            const SizedBox(height: 12),
-          ],
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: FastPayCheckoutPalette.textPrimary,
-              side: const BorderSide(color: FastPayCheckoutPalette.border),
-              minimumSize: const Size.fromHeight(54),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              textStyle: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            onPressed: onDone,
-            child: const Text('Done'),
           ),
+          const SizedBox(height: 24),
+          if (result.isFailure && onRetry != null) ...<Widget>[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onRetry,
+                style: _elevatedButtonStyle(),
+                child: const Text(
+                  'Try Again',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ] else ...<Widget>[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onDone,
+                style: _elevatedButtonStyle(),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ],
       ),
     );
   }
 
-  ButtonStyle _primaryButtonStyle(ThemeData theme) {
-    return FilledButton.styleFrom(
+  ButtonStyle _elevatedButtonStyle() {
+    return ElevatedButton.styleFrom(
       backgroundColor: FastPayCheckoutPalette.primary,
-      foregroundColor: Colors.white,
-      minimumSize: const Size.fromHeight(54),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      textStyle: theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w700,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
       ),
     );
   }
 
   String _defaultMessage(PaymentResult result) {
     if (result.isSuccess) {
-      return 'Your payment was confirmed and the order is ready to continue.';
+      return 'Your transaction has been confirmed.';
     }
 
     if (result.isPending) {
       return 'We are waiting for the final payment confirmation from the gateway.';
     }
 
-    return 'We could not complete the transaction. You can review the details and try again.';
+    return 'We couldn\'t complete payment. No charges were made.';
   }
 
   _ResultTone _toneForResult(PaymentResult result) {
     if (result.isSuccess) {
       return const _ResultTone(
         title: 'Payment Successful',
-        icon: Icons.check_rounded,
+        icon: Icons.check_circle_outline_rounded,
         iconBackground: FastPayCheckoutPalette.successSoft,
         iconColor: FastPayCheckoutPalette.success,
         amountBackground: FastPayCheckoutPalette.primary,
@@ -224,37 +234,24 @@ class _ResultDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: FastPayCheckoutPalette.surfaceMuted,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: FastPayCheckoutPalette.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: FastPayCheckoutPalette.textSecondary,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: FastPayCheckoutPalette.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.end,
-            ),
+        ),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: FastPayCheckoutPalette.textPrimary,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../models/card_details.dart';
 import '../utils/card_input_formatters.dart';
+import '../models/card_details.dart';
 import 'fastpay_checkout_theme.dart';
 
 /// Card entry form embedded in the FastPay checkout page.
@@ -81,144 +81,124 @@ class _FastPayCardFormState extends State<FastPayCardForm> {
               height: 1.45,
             ),
           ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _cardholderController,
-            enabled: widget.enabled,
-            textCapitalization: TextCapitalization.words,
-            decoration: fastPayInputDecoration(
-              label: 'Cardholder name',
-              hint: 'Name on card',
-              prefixIcon: const Icon(Icons.person_outline_rounded),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
-            validator: (String? value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Enter the cardholder name.';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _cardNumberController,
-            enabled: widget.enabled,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-            decoration: fastPayInputDecoration(
-              label: 'Card number',
-              hint: '4111 1111 1111 1111',
-              prefixIcon: const Icon(Icons.credit_card_rounded),
-            ),
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly,
-              CardNumberInputFormatter(),
-            ],
-            validator: (String? value) {
-              final String digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
-              if (digits.length < 13 || digits.length > 19) {
-                return 'Enter a valid card number.';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: TextFormField(
-                  controller: _expiryController,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _cardholderController,
                   enabled: widget.enabled,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: fastpayInputDecorationUnified(
+                    hint: 'Cardholder name',
+                    prefixIcon: const Icon(Icons.person_outline_rounded),
+                  ),
+                  validator: (String? value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Enter the cardholder name.';
+                    }
+                    return null;
+                  },
+                ),
+                const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                TextFormField(
+                  controller: _cardNumberController,
+                  enabled: widget.enabled,
+                  obscureText: true,
+                  obscuringCharacter: '*',
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.next,
-                  decoration: fastPayInputDecoration(
-                    label: 'Expiry date',
-                    hint: 'MM/YY',
-                    prefixIcon: const Icon(Icons.calendar_today_outlined),
+                  decoration: fastpayInputDecorationUnified(
+                    hint: 'Card number',
+                    prefixIcon: const Icon(Icons.credit_card_rounded),
                   ),
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
-                    ExpiryDateInputFormatter(),
+                    CardNumberInputFormatter(),
                   ],
                   validator: (String? value) {
-                    final List<String> parts = (value ?? '').split('/');
-                    if (parts.length != 2) {
-                      return 'Use MM/YY.';
-                    }
-
-                    final int? month = int.tryParse(parts[0]);
-                    final int? year = int.tryParse(parts[1]);
-                    if (month == null ||
-                        year == null ||
-                        month < 1 ||
-                        month > 12) {
-                      return 'Invalid expiry date.';
-                    }
-
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _cvvController,
-                  enabled: widget.enabled,
-                  keyboardType: TextInputType.number,
-                  decoration: fastPayInputDecoration(
-                    label: 'Security code',
-                    hint: '123',
-                    prefixIcon: const Icon(Icons.lock_outline_rounded),
-                  ),
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                  ],
-                  validator: (String? value) {
-                    final String digits =
-                        value?.replaceAll(RegExp(r'\D'), '') ?? '';
-                    if (digits.length < 3 || digits.length > 4) {
-                      return 'Invalid CVV.';
+                    final String digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
+                    if (digits.length != 16) {
+                      return 'Enter a valid 16-digit card number.';
                     }
                     return null;
                   },
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: FastPayCheckoutPalette.primarySoft,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: <Widget>[
-                const Icon(
-                  Icons.verified_user_outlined,
-                  color: FastPayCheckoutPalette.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '256-bit encryption keeps your payment details secure.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: FastPayCheckoutPalette.primaryDark,
-                      fontWeight: FontWeight.w600,
-                    ),
+                const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                IntrinsicHeight(
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: TextFormField(
+                          controller: _expiryController,
+                          enabled: widget.enabled,
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.next,
+                          decoration: fastpayInputDecorationUnified(
+                            hint: 'Expiry...',
+                            prefixIcon: const Icon(Icons.calendar_today_outlined),
+                          ),
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                            ExpiryDateInputFormatter(),
+                          ],
+                          validator: (String? value) {
+                            final List<String> parts = (value ?? '').split('/');
+                            if (parts.length != 2) {
+                              return 'Use MM/YY.';
+                            }
+
+                            final int? month = int.tryParse(parts[0]);
+                            final int? year = int.tryParse(parts[1]);
+                            if (month == null || year == null || month < 1 || month > 12) {
+                              return 'Invalid expiry date.';
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ),
+                      const VerticalDivider(width: 1, color: Color(0xFFE0E0E0)),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _cvvController,
+                          enabled: widget.enabled,
+                          keyboardType: TextInputType.number,
+                          decoration: fastpayInputDecorationUnified(
+                            hint: 'Security...',
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          ),
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3),
+                          ],
+                          validator: (String? value) {
+                            final String digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
+                            if (digits.length != 3) {
+                              return 'Invalid CVV.';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: FastPayCheckoutPalette.primary,
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(56),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(10),
               ),
               textStyle: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,

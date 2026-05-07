@@ -22,23 +22,27 @@ class FastPayCheckout {
     String? redirectUrl,
     Future<void> Function(String checkoutUrl)? onOpenCheckout,
   }) async {
-    final PaymentResult? result = await Navigator.of(context)
-        .push<PaymentResult>(
-          MaterialPageRoute<PaymentResult>(
-            fullscreenDialog: true,
-            builder: (_) => FastPayCheckoutPage(
-              amount: amount,
-              currency: currency,
-              customer: customer,
-              merchantOrderId: merchantOrderId,
-              checkoutUrl: checkoutUrl,
-              callbackUrl: callbackUrl,
-              metadata: metadata,
-              redirectUrl: redirectUrl,
-              onOpenCheckout: onOpenCheckout,
-            ),
-          ),
-        );
+    final PaymentResult? result = await showModalBottomSheet<PaymentResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: FastPayCheckoutPage(
+          amount: amount,
+          currency: currency,
+          customer: customer,
+          merchantOrderId: merchantOrderId,
+          checkoutUrl: checkoutUrl,
+          callbackUrl: callbackUrl,
+          metadata: metadata,
+          redirectUrl: redirectUrl,
+          onOpenCheckout: onOpenCheckout,
+        ),
+      ),
+    );
 
     return result ??
         const PaymentResult(

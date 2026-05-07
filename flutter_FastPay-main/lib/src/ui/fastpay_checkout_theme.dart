@@ -19,6 +19,7 @@ class FastPayCheckoutPalette {
   static const Color danger = Color(0xFFEB5757);
   static const Color dangerSoft = Color(0xFFFFEAEA);
   static const Color shadow = Color(0x14243B53);
+  static const Color inputFill = Color(0xFFF9F9F9);
 }
 
 BoxDecoration fastPaySurfaceDecoration({
@@ -27,7 +28,7 @@ BoxDecoration fastPaySurfaceDecoration({
 }) {
   return BoxDecoration(
     color: color,
-    borderRadius: BorderRadius.circular(28),
+    borderRadius: BorderRadius.circular(25),
     border: Border.all(color: borderColor),
     boxShadow: const <BoxShadow>[
       BoxShadow(
@@ -40,24 +41,24 @@ BoxDecoration fastPaySurfaceDecoration({
 }
 
 InputDecoration fastPayInputDecoration({
-  required String label,
+  String? label,
   required String hint,
   Widget? prefixIcon,
 }) {
-  const OutlineInputBorder border = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(18)),
-    borderSide: BorderSide(color: FastPayCheckoutPalette.border),
+  final OutlineInputBorder border = OutlineInputBorder(
+    borderRadius: const BorderRadius.all(Radius.circular(10)),
+    borderSide: BorderSide.none,
   );
 
   return InputDecoration(
     labelText: label,
     hintText: hint,
     filled: true,
-    fillColor: FastPayCheckoutPalette.surfaceMuted,
+    fillColor: FastPayCheckoutPalette.inputFill,
     prefixIcon: prefixIcon,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     labelStyle: const TextStyle(color: FastPayCheckoutPalette.textSecondary),
-    hintStyle: const TextStyle(color: FastPayCheckoutPalette.textSecondary),
+    hintStyle: const TextStyle(color: Color(0xFFC4C4C4)), // AppColors.hintColor
     border: border,
     enabledBorder: border,
     focusedBorder: border.copyWith(
@@ -78,6 +79,28 @@ InputDecoration fastPayInputDecoration({
         width: 1.4,
       ),
     ),
+  );
+}
+
+InputDecoration fastpayInputDecorationUnified({
+  String? label,
+  required String hint,
+  Widget? prefixIcon,
+}) {
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+    filled: true,
+    fillColor: Colors.transparent, // Transparent for unified container
+    prefixIcon: prefixIcon,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    labelStyle: const TextStyle(color: FastPayCheckoutPalette.textSecondary),
+    hintStyle: const TextStyle(color: Color(0xFFC4C4C4)),
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
   );
 }
 

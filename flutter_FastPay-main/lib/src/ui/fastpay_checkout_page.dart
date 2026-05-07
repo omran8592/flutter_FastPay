@@ -86,51 +86,31 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: FastPayCheckoutPalette.background,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: <Color>[Color(0xFFF7F8FC), Color(0xFFEEF2FF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (BuildContext context, _) {
-            final ThemeData theme = Theme.of(context);
-            final FastPayFlowState state = _controller.state;
+    return Container(
+      decoration: const BoxDecoration(
+        color: FastPayCheckoutPalette.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (BuildContext context, _) {
+          final ThemeData theme = Theme.of(context);
+          final FastPayFlowState state = _controller.state;
 
-            return SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        _CheckoutHeader(
-                          onClose: () => _close(_controller.state.result),
-                        ),
-                        const SizedBox(height: 20),
-                        _CheckoutSummary(
-                          amount: widget.amount,
-                          currency: widget.currency,
-                          merchantOrderId: widget.merchantOrderId,
-                        ),
-                        const SizedBox(height: 18),
+          return SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
                         if (state.stage == FastPayFlowStage.creatingSession ||
-                            state.stage == FastPayFlowStage.initial)
-                          const _StatusCard(
-                            title: 'Creating secure session',
-                            message:
-                                'FastPay is preparing a secure payment session for your transaction.',
-                            icon: Icons.shield_outlined,
-                            showSpinner: true,
-                          )
-                        else if (state.stage == FastPayFlowStage.ready)
+                            state.stage == FastPayFlowStage.initial ||
+                            state.stage == FastPayFlowStage.ready)
                           Container(
                             padding: const EdgeInsets.all(22),
                             decoration: fastPaySurfaceDecoration(),
@@ -144,12 +124,9 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
                             ),
                           )
                         else if (state.stage == FastPayFlowStage.processing)
-                          const _StatusCard(
-                            title: 'Processing payment',
-                            message:
-                                'We are securely processing your card payment. Please wait a moment.',
-                            icon: Icons.credit_card_rounded,
-                            showSpinner: true,
+                          const _CustomLoadingScreen(
+                            title: 'Processing your\npayment...',
+                            message: 'Please do not close the FastPay app\nor refresh the page while we\nauthorize your transaction.',
                           )
                         else if (state.result != null)
                           FastPayResultView(
@@ -186,9 +163,8 @@ class _FastPayCheckoutPageState extends State<FastPayCheckoutPage> {
             );
           },
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Future<void> _start() async {
     try {
@@ -618,64 +594,77 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  const _StatusCard({
-    required this.title,
-    required this.message,
-    required this.icon,
-    this.showSpinner = false,
-  });
+class _CustomLoadingScreen extends StatelessWidget {
+  const _CustomLoadingScreen({required this.title, required this.message});
 
   final String title;
   final String message;
-  final IconData icon;
-  final bool showSpinner;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: fastPaySurfaceDecoration(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Container(
-            width: 74,
-            height: 74,
-            decoration: BoxDecoration(
-              color: FastPayCheckoutPalette.primarySoft,
-              shape: BoxShape.circle,
-            ),
-            child: showSpinner
-                ? const Padding(
-                    padding: EdgeInsets.all(18),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        FastPayCheckoutPalette.primary,
-                      ),
-                    ),
-                  )
-                : Icon(icon, size: 34, color: FastPayCheckoutPalette.primary),
+          Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Container(
+                width: 70,
+                height: 70,
+                decoration: const BoxDecoration(
+                  color: FastPayCheckoutPalette.primarySoft,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.bolt_rounded, size: 40, color: FastPayCheckoutPalette.primary),
+              ),
+              const SizedBox(
+                width: 86,
+                height: 86,
+                child: CircularProgressIndicator(
+                  strokeWidth: 4,
+                  valueColor: AlwaysStoppedAnimation<Color>(FastPayCheckoutPalette.primary),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 32),
           Text(
             title,
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.titleLarge?.copyWith(
               color: FastPayCheckoutPalette.textPrimary,
               fontWeight: FontWeight.w800,
+              fontSize: 22,
+              height: 1.2,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             message,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: FastPayCheckoutPalette.textSecondary,
-              height: 1.55,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 60),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(Icons.lock_outline_rounded, size: 14, color: FastPayCheckoutPalette.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                'Secure 256-bit encrypted payment',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: FastPayCheckoutPalette.textSecondary,
+                ),
+              ),
+            ],
           ),
         ],
       ),

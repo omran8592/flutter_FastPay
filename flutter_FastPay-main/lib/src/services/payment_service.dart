@@ -1,4 +1,5 @@
 import '../models/cancel_payment_result.dart';
+import '../models/card_details.dart';
 import '../models/customer.dart';
 import '../models/payment_details.dart';
 import '../models/payment_method.dart';
@@ -25,6 +26,7 @@ abstract class PaymentService {
     String? paymentMethod,
     String? redirectUrl,
     String? callbackUrl,
+    CardDetails? card,
   });
 
   Future<CancelPaymentResult> cancelPayment({required String paymentId});

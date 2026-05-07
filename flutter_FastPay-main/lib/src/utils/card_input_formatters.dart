@@ -10,7 +10,7 @@ class CardNumberInputFormatter extends TextInputFormatter {
     final String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
     final StringBuffer buffer = StringBuffer();
 
-    for (int index = 0; index < digits.length && index < 19; index++) {
+    for (int index = 0; index < digits.length && index < 16; index++) {
       if (index > 0 && index % 4 == 0) {
         buffer.write(' ');
       }

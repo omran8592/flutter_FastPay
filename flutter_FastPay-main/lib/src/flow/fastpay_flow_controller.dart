@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/api_exception.dart';
 import '../models/card_details.dart';
 import '../models/customer.dart';
 import '../models/payment_details.dart';
@@ -130,13 +131,16 @@ class FastPayFlowController extends ChangeNotifier {
     );
 
     try {
-      // Retry the payment with the card details attached via metadata.
-      // The backend can use these details to process the charge.
+      // Add a slight delay to ensure the processing UI is visible to the user.
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Submits the payment with the card details for direct processing.
       await _paymentService.retryPayment(
         paymentId: paymentId,
         paymentMethod: 'card',
         callbackUrl: null,
         redirectUrl: null,
+        card: card,
       );
 
       // Now check the final payment status.
@@ -161,7 +165,8 @@ class FastPayFlowController extends ChangeNotifier {
       return result;
     } catch (error) {
       final PaymentDetails? payment = _state.payment;
-      return _fail(message: error.toString(), payment: payment);
+      final String message = error is ApiException ? error.message : error.toString();
+      return _fail(message: message, payment: payment);
     }
   }
 

@@ -1,6 +1,7 @@
 import '../core/api_client.dart';
 import '../core/api_exception.dart';
 import '../core/validators.dart';
+import '../models/card_details.dart';
 import '../models/cancel_payment_result.dart';
 import '../models/customer.dart';
 import '../models/payment_details.dart';
@@ -102,6 +103,7 @@ class FastPayPaymentService implements PaymentService {
     String? paymentMethod,
     String? redirectUrl,
     String? callbackUrl,
+    CardDetails? card,
   }) async {
     Validators.requireNotBlank(paymentId, 'paymentId');
     final ApiEnvelope envelope = await _apiClient.post(
@@ -110,6 +112,7 @@ class FastPayPaymentService implements PaymentService {
         'payment_method': asString(paymentMethod),
         'redirect_url': asString(redirectUrl),
         'callback_url': asString(callbackUrl),
+        if (card != null) ...card.toJson(),
       }..removeWhere((String _, dynamic value) => value == null),
     );
     return RetryPaymentResult.fromJson(
